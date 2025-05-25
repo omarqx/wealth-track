@@ -20,6 +20,9 @@
 # production
 /build
 
+# pre-commit
+.husky
+
 # misc
 .DS_Store
 *.pem
