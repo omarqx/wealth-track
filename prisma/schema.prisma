@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql" // You can change this to your database of choice (e.g., sqlite, mysql)
+  url      = env("DATABASE_URL")
+}
+
+// --- Enums ---
+
+// Defines the type of authentication method
+enum AuthType {
+  OAUTH       // For social logins (Google, GitHub, etc.)
+  CREDENTIALS // For traditional email and password logins
+}
+
+// Defines the specific authentication provider
+enum AuthProvider {
+  GOOGLE
+  EMAIL_PASSWORD
+}
+
+// --- Models ---
+
+// User Model: Central user entity
+model User {
+  id               String    @id @default(uuid())
+  email            String    @unique
+  emailVerified    DateTime? // Null if not verified, timestamp when verified
+  image            String?   // Profile image URL (e.g., avatar)
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  authMethods      AuthMethod[] // Relation to authentication methods
+  profile          Profile?     // One-to-one relation with Profile
+}
+
+// AuthMethod Model: Links a User to a specific authentication method (email/pass or Google)
+model AuthMethod {
+  id                 String    @id @default(uuid())
+  userId             String
+  type               AuthType  // e.g., OAUTH, CREDENTIALS
+  provider           AuthProvider // e.g., GOOGLE, EMAIL_PASSWORD
+  providerAccountId  String    // Unique identifier for the account within the provider
+                               // (e.g., Google user ID, or the user's email for email-password)
+
+  // Specific field for email/password login
+  passwordHash       String?   // Stores the HASHED password for 'CREDENTIALS' type
+
+  // OAuth specific fields
+  refreshToken       String?
+  accessToken        String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId]) // Ensures a user can't link the same provider account twice
+}
+
+// VerificationToken Model: For email verification (common for email/pass signup)
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Profile Model: Stores additional user-specific information
+model Profile {
+  id        String    @id @default(uuid())
+  userId    String    @unique // One-to-one relation with User
+  bio       String?
+  website   String?
+  location  String?
+  birthDate DateTime?
+  // Add any other profile-specific fields here
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
