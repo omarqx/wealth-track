@@ -8,6 +8,14 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('--- Starting Simplified User & Profile Seed Script ---');
 
+  // Clean up existing data (Order matters to avoid foreign key constraints) ---
+  console.log('🗑️ Deleting existing data...');
+  await prisma.profile.deleteMany();
+  await prisma.authMethod.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.verificationToken.deleteMany();
+  console.log('✅ Existing data deleted.');
+
   // --- 2. Create Three Sample Users with Email/Password Auth & Profiles ---
   console.log('👤 Creating three sample users with profiles and email/password authentication...');
 
